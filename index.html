@@ -18,8 +18,12 @@ main{padding:12px 14px 40px;max-width:760px;margin:auto}
 .card h2{font-size:17px;margin:0 0 4px}.tag{font-size:12px;color:var(--mute);margin-bottom:8px}
 .card p{margin:4px 0;font-size:14px;line-height:1.5}.k{color:var(--mute)}
 .card a{color:var(--ac)}.count{font-size:13px;color:var(--mute);margin:4px 0 10px}
+#lock{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:9}
+#lock input{width:220px;text-align:center;font-size:18px}#lock button,.gb{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:9px 18px;font-size:15px;text-decoration:none;display:inline-block}
+#err{color:#c33;font-size:13px;min-height:1em}.top{display:flex;justify-content:space-between;align-items:center}.gb{padding:6px 12px;font-size:13px}
 </style></head><body>
-<header><h1>Vincent 旅遊日誌</h1>
+<div id="lock"><h1>Vincent 旅遊日誌</h1><input id="pw" type="password" inputmode="numeric" placeholder="輸入密碼"><button id="go">進入</button><div id="err"></div></div>
+<header><div class="top"><h1>Vincent 旅遊日誌</h1><a class="gb" id="gbtn" href="grokbot://app/v1/agent?id=77300747-d678-45b2-85f1-6158e0f2d4c2">Grok Bot 新增／修改</a></div>
 <div class="chips" id="cats"></div>
 <div class="row"><select id="zone"></select><input id="q" placeholder="搜尋：宜蘭、咖啡、民宿…"></div></header>
 <main><div class="count" id="count"></div><div id="list"></div></main>
@@ -47,5 +51,15 @@ function render(){
 document.getElementById("zone").innerHTML=ZONES.map(z=>`<option>${z}</option>`).join("");
 document.getElementById("cats").onclick=ev=>{const c=ev.target.dataset.c;if(c){cat=c;render()}};
 document.getElementById("zone").onchange=render;document.getElementById("q").oninput=render;
-fetch("data.json?"+Date.now()).then(r=>r.json()).then(d=>{E=d.entries.slice().reverse();render()});
+const ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function unlock(pw){const r=await fetch("data.enc.json?"+Date.now());const j=await r.json();
+ const km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+ const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:ub(j.salt),iterations:j.iter,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
+ const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(j.iv)},key,ub(j.ct));
+ const d=JSON.parse(new TextDecoder().decode(pt));E=d.entries.slice().reverse();render();
+ document.getElementById("lock").style.display="none";localStorage.setItem("tlpw",pw);}
+async function tryPw(pw){try{await unlock(pw)}catch(e){document.getElementById("err").textContent="密碼不對，再試一次";localStorage.removeItem("tlpw")}}
+document.getElementById("go").onclick=()=>tryPw(document.getElementById("pw").value);
+document.getElementById("pw").onkeydown=e=>{if(e.key==="Enter")tryPw(e.target.value)};
+const saved=localStorage.getItem("tlpw");if(saved)tryPw(saved);
 </script></body></html>
