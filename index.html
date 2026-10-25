@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vincent 旅遊日誌</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#222;--mute:#777;--ac:#2e7d5b}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--ink)}
+header{position:sticky;top:0;background:var(--bg);padding:12px 14px 8px;z-index:2;border-bottom:1px solid #e5e2dc}
+h1{font-size:20px;margin:0 0 8px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.chip{flex:none;border:1px solid #ccc;background:#fff;border-radius:999px;padding:6px 12px;font-size:14px}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.row{display:flex;gap:8px}select,input{font-size:15px;padding:8px;border:1px solid #ccc;border-radius:8px;background:#fff}
+select{flex:none}input{flex:1;min-width:0}
+main{padding:12px 14px 40px;max-width:760px;margin:auto}
+.card{background:var(--card);border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card h2{font-size:17px;margin:0 0 4px}.tag{font-size:12px;color:var(--mute);margin-bottom:8px}
+.card p{margin:4px 0;font-size:14px;line-height:1.5}.k{color:var(--mute)}
+.card a{color:var(--ac)}.count{font-size:13px;color:var(--mute);margin:4px 0 10px}
+</style></head><body>
+<header><h1>Vincent 旅遊日誌</h1>
+<div class="chips" id="cats"></div>
+<div class="row"><select id="zone"></select><input id="q" placeholder="搜尋：宜蘭、咖啡、民宿…"></div></header>
+<main><div class="count" id="count"></div><div id="list"></div></main>
+<script>
+const CATS=["全部","食","衣","住","行","育","樂"],ZONES=["全部地區","台灣・北","台灣・中","台灣・南","台灣・東","台灣・離島","國外"];
+let cat="全部",E=[];
+const zoneOf=e=>e["區域"]==="台灣"?"台灣・"+e["分區"]:"國外";
+const esc=s=>String(s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const link=s=>esc(s).replace(/https?:\/\/[^\s，；、）)]+/g,u=>`<a href="${u}" target="_blank">${u.length>40?"連結":u}</a>`);
+function render(){
+ document.getElementById("cats").innerHTML=CATS.map(c=>`<button class="chip ${c===cat?"on":""}" data-c="${c}">${c} ${c==="全部"?E.length:E.filter(e=>e["類別"]===c).length}</button>`).join("");
+ const z=document.getElementById("zone").value,k=document.getElementById("q").value.trim();
+ const s=E.filter(e=>(cat==="全部"||e["類別"]===cat)&&(z==="全部地區"||zoneOf(e)===z)&&(!k||Object.values(e).join(" ").includes(k)));
+ document.getElementById("count").textContent=`共 ${s.length} 筆`;
+ document.getElementById("list").innerHTML=s.map(e=>{
+  const q=encodeURIComponent(e["名稱"]+" "+(e["地址"]||""));
+  const tel=(e["電話"]||"").match(/[\d-]{8,}/);
+  return `<div class="card"><h2>${esc(e["名稱"])}</h2><div class="tag">${e["類別"]}・${zoneOf(e)}・${esc(e["縣市"])} ${esc(e["子類"])}</div>
+  ${e["地址"]?`<p><span class="k">地址</span> <a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank">${esc(e["地址"])}</a></p>`:""}
+  ${e["電話"]?`<p><span class="k">電話</span> ${tel?`<a href="tel:${tel[0].replace(/-/g,"")}">${esc(e["電話"])}</a>`:esc(e["電話"])}</p>`:""}
+  ${e["營業時間"]?`<p><span class="k">時間</span> ${esc(e["營業時間"])}</p>`:""}
+  ${e["備註"]?`<p>${link(e["備註"])}</p>`:""}
+  ${e["官網"]?`<p><a href="${e["官網"]}" target="_blank">官網</a></p>`:""}${e["訂位"]?`<p><a href="${e["訂位"]}" target="_blank">訂位</a></p>`:""}</div>`}).join("");
+}
+document.getElementById("zone").innerHTML=ZONES.map(z=>`<option>${z}</option>`).join("");
+document.getElementById("cats").onclick=ev=>{const c=ev.target.dataset.c;if(c){cat=c;render()}};
+document.getElementById("zone").onchange=render;document.getElementById("q").oninput=render;
+fetch("data.json?"+Date.now()).then(r=>r.json()).then(d=>{E=d.entries.slice().reverse();render()});
+</script></body></html>
