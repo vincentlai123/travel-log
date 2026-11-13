@@ -28,17 +28,18 @@ main{padding:12px 14px 40px;max-width:760px;margin:auto}
 <div class="row"><select id="zone"></select><select id="topic"></select><input id="q" placeholder="搜尋：宜蘭、咖啡、民宿…"></div></header>
 <main><div class="count" id="count"></div><div id="list"></div></main>
 <script>
-const CATS=["全部","食","衣","住","行","育","樂"],ZONES=["全部地區","台灣・北","台灣・中","台灣・南","台灣・東","台灣・離島","國外"];
+const CATS=["全部","食","衣","住","行","育","樂"],ZONES=["全部地區","台灣・北","中永和","台灣・中","台灣・南","台灣・東","台灣・離島","國外"];
 let cat="全部",E=[];
 const TOPICS=["全部專題","麵類"];
 const topicsOf=e=>Array.isArray(e["專題"])?e["專題"]:(e["專題"]?[String(e["專題"])]:[]);
 const zoneOf=e=>e["區域"]==="台灣"?"台灣・"+e["分區"]:"國外";
+const isZYH=e=>/中和區|永和區/.test([e["縣市"],e["地點"],e["地址"]].join(" "));
 const esc=s=>String(s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const link=s=>esc(s).replace(/https?:\/\/[^\s，；、）)]+/g,u=>`<a href="${u}" target="_blank">${u.length>40?"連結":u}</a>`);
 function render(){
  document.getElementById("cats").innerHTML=CATS.map(c=>`<button class="chip ${c===cat?"on":""}" data-c="${c}">${c} ${c==="全部"?E.length:E.filter(e=>e["類別"]===c).length}</button>`).join("");
  const z=document.getElementById("zone").value,t=document.getElementById("topic").value,k=document.getElementById("q").value.trim();
- const s=E.filter(e=>(cat==="全部"||e["類別"]===cat)&&(z==="全部地區"||zoneOf(e)===z)&&(t==="全部專題"||topicsOf(e).includes(t))&&(!k||Object.values(e).join(" ").includes(k)));
+ const s=E.filter(e=>(cat==="全部"||e["類別"]===cat)&&(z==="全部地區"||(z==="中永和"?isZYH(e):zoneOf(e)===z))&&(t==="全部專題"||topicsOf(e).includes(t))&&(!k||Object.values(e).join(" ").includes(k)));
  document.getElementById("count").textContent=`共 ${s.length} 筆`;
  document.getElementById("list").innerHTML=s.map(e=>{
   const q=encodeURIComponent(e["名稱"]+" "+(e["地址"]||""));
