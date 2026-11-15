@@ -28,10 +28,11 @@ main{padding:12px 14px 40px;max-width:760px;margin:auto}
 <div class="row"><select id="zone"></select><select id="topic"></select><input id="q" placeholder="搜尋：宜蘭、咖啡、民宿…"></div></header>
 <main><div class="count" id="count"></div><div id="list"></div></main>
 <script>
-const CATS=["全部","食","衣","住","行","育","樂"],ZONES=["全部地區","台灣・北","中永和","台灣・中","台灣・南","台灣・東","台灣・離島","國外","日本","日本・北海道","日本・東北","日本・關東","日本・中部","日本・關西","日本・中國","日本・四國","日本・九州沖繩"];
+const CATS=["全部","食","衣","住","行","育","樂"],ZONES=["全部地區","台灣・北","中永和","台灣・中","台灣・南","台灣・東","台灣・離島","國外","日本","日本・北海道","日本・東北","日本・關東","日本・中部","日本・關西","日本・中國","日本・四國","日本・九州沖繩","美國運通"];
 let cat="全部",E=[];
 const TOPICS=["全部專題","麵類"];
 const topicsOf=e=>Array.isArray(e["專題"])?e["專題"]:(e["專題"]?[String(e["專題"])]:[]);
+const tagsOf=e=>Array.isArray(e["標籤"])?e["標籤"]:(e["標籤"]?[String(e["標籤"])]:[]);
 const locOf=e=>[e["分區"],e["縣市"],e["地點"],e["地址"]].join(" ");
 const isJP=e=>e["區域"]==="日本"||e["分區"]==="日本"||/日本/.test([e["區域"],e["分區"],e["縣市"],e["地點"],e["地址"]].join(" "));
 const JP_REGS={"日本・北海道":/北海道|札幌|函館|小樽|旭川|釧路|帶廣|帯広|網走|稚內|稚内|室蘭|苫小牧|富良野|登別|知床|美瑛|定山溪|定山渓|千歲|千歳/,"日本・東北":/東北|青森|岩手|宮城|秋田|山形|福島|仙台|盛岡|郡山|會津|会津|弘前|八戶|八戸|米澤|米沢|宮古市/,"日本・關東":/關東|関東|東京|茨城|栃木|群馬|埼玉|千葉|神奈川|橫濱|横浜|川崎|宇都宮|水戶|水戸|前橋|高崎|鎌倉|橫須賀|横須賀|箱根|成田|日光|大宮|川越|船橋|伊勢崎/,"日本・中部":/中部|新潟|富山|石川|福井|山梨|長野|岐阜|靜岡|静岡|愛知|名古屋|金澤|金沢|甲府|松本|濱松|浜松|熱海|輕井澤|軽井沢|富士山|富士市|富士宮|富士五湖|高山市|飛驒|飛騨|白川鄉|白川郷/,"日本・關西":/關西|関西|近畿|大阪府|(?:^|[^東])大阪|(?:^|[^東])京都|兵庫|奈良|和歌山|滋賀|三重[縣県]|神戶|神戸|姬路|姫路|宇治|伊勢市|伊勢神宮|伊勢志摩|白濱|白浜|高野山|西宮|蘆屋|芦屋|大津/,"日本・中國":/中國地方|中国地方|鳥取|島根|岡山|廣島|広島|山口|松江|出雲|倉敷|尾道|下關|下関|岩國|岩国|宮島|萩/,"日本・四國":/四國|四国|德島|徳島|香川|愛媛|高知|高松|松山|今治|宇和島|鳴門|琴平|道後/,"日本・九州沖繩":/九州|沖繩|沖縄|福岡|佐賀|長崎|熊本|大分|宮崎|鹿兒島|鹿児島|那霸|那覇|博多|北九州|別府|石垣|宮古島|恩納|名護|本部|讀谷|読谷|北谷|糸滿|糸満|嘉手納|久米島|西表|阿蘇|由布院|湯布院|佐世保|唐津|宜野灣|宜野湾|豐見城|豊見城/};
@@ -39,7 +40,7 @@ const jpZoneOf=e=>{const s=locOf(e);for(const z of Object.keys(JP_REGS))if(JP_RE
 const isJPLike=e=>isJP(e)||(e["區域"]==="國外"&&!!jpZoneOf(e));
 const zoneOf=e=>{if(e["區域"]==="台灣")return "台灣・"+e["分區"];if(isJPLike(e))return jpZoneOf(e)||"日本";return "國外"};
 const isZYH=e=>/中和區|永和區/.test([e["縣市"],e["地點"],e["地址"]].join(" "));
-const zoneMatch=(e,z)=>z==="全部地區"||(z==="中永和"?isZYH(e):z==="國外"?e["區域"]!=="台灣":z==="日本"?isJPLike(e):JP_REGS[z]?isJPLike(e)&&JP_REGS[z].test(locOf(e)):zoneOf(e)===z);
+const zoneMatch=(e,z)=>z==="全部地區"||(z==="中永和"?isZYH(e):z==="國外"?e["區域"]!=="台灣":z==="日本"?isJPLike(e):z==="美國運通"?tagsOf(e).includes("美國運通"):JP_REGS[z]?isJPLike(e)&&JP_REGS[z].test(locOf(e)):zoneOf(e)===z);
 const esc=s=>String(s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 const link=s=>esc(s).replace(/https?:\/\/[^\s，；、）)]+/g,u=>`<a href="${u}" target="_blank">${u.length>40?"連結":u}</a>`);
 function render(){
@@ -50,7 +51,7 @@ function render(){
  document.getElementById("list").innerHTML=s.map(e=>{
   const q=encodeURIComponent(e["名稱"]+" "+(e["地址"]||""));
   const tel=(e["電話"]||"").match(/[\d-]{8,}/);
-  return `<div class="card"><h2>${esc(e["名稱"])}</h2><div class="tag">${e["類別"]}・${zoneOf(e)}・${esc(e["縣市"])} ${esc(e["子類"])}${topicsOf(e).map(x=>` ・#${esc(x)}`).join("")}</div>
+  return `<div class="card"><h2>${esc(e["名稱"])}</h2><div class="tag">${e["類別"]}・${zoneOf(e)}・${esc(e["縣市"])} ${esc(e["子類"])}${topicsOf(e).map(x=>` ・#${esc(x)}`).join("")}${tagsOf(e).map(x=>` ・#${esc(x)}`).join("")}</div>
   ${e["地址"]?`<p><span class="k">地址</span> <a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank">${esc(e["地址"])}</a></p>`:""}
   ${e["電話"]?`<p><span class="k">電話</span> ${tel?`<a href="tel:${tel[0].replace(/-/g,"")}">${esc(e["電話"])}</a>`:esc(e["電話"])}</p>`:""}
   ${e["營業時間"]?`<p><span class="k">時間</span> ${esc(e["營業時間"])}</p>`:""}
