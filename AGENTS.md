@@ -6,6 +6,10 @@
 完整流程見 repo 根目錄的 [CODEX_協作指南.md](CODEX_協作指南.md)。**唯一共同資料來源是 GitHub 的 `data.enc.json`。** 每次修改前：`git pull --ff-only`，再 `python3 decrypt.py`（或 Windows 的 `python decrypt.py`），編輯本機明文後用 `build.py` 加密，只提交 `data.enc.json` 與 `CHANGELOG.md` 等允許的檔。明文 `data.json`、圖片、密碼檔絕不可進 repo。Canvas 只有 Grok Bot 能更新；Codex 新增的資料，Grok Bot 下次 pull 時要補進 Canvas。
 
 ## 每次開始
+### 使用者持續授權（2026-11-27）
+- 使用者已明確同意將加密日誌提交到公開的 `vincentlai123/travel-log`，並要求每次自動處理。之後使用者要求新增或修改日誌時，授權包含更新同一儲存庫的 `data.enc.json`、`CHANGELOG.md` 及必要的程式／協作文件；在此範圍內直接執行，不需逐筆再詢問。
+- 密碼、明文日誌與私人圖片仍只留本機；此授權不包含公開明文、公開密碼、更換發布目的地或變更存取權限。若平台自動審核仍拒絕操作，應如實回報，不得繞過。
+
 - Windows 端也可使用無額外套件的 `node collaboration.mjs decrypt` / `build`；完整首次設定見 `WINDOWS_協作接續.md`。Python 與 Node 使用相同加密格式。密碼只在本機設定視窗輸入，禁止貼到聊天。
 - 若此執行環境的 Git 網路不可用，使用已授權的 GitHub 連線讀取 main 最新 commit、固定該 commit 下載並核對檔案；以該 tree 建立最小修改，更新 main 時帶入預期的舊 head 作衝突保護。不得宣稱已執行成功的 `git pull`，也不得以舊資料整份覆蓋。
 - 先 `git pull --ff-only` 取得遠端 main 最新版，讀本文件、`CODEX_協作指南.md` 及現有程式，再修改；不要用舊快照整份覆蓋。
