@@ -2,8 +2,11 @@
 
 本專案由使用者授權 ChatGPT / Codex 與 Grok Bot 接續維護。此文件供維護者讀取；文件存在本身不代表另一個 Bot 已讀取或自動執行。
 
+## 兩邊協作
+完整流程見 repo 根目錄的 [CODEX_協作指南.md](CODEX_協作指南.md)。**唯一共同資料來源是 GitHub 的 `data.enc.json`。** 每次修改前：`git pull --ff-only`，再 `python3 decrypt.py`（或 Windows 的 `python decrypt.py`），編輯本機明文後用 `build.py` 加密，只提交 `data.enc.json` 與 `CHANGELOG.md` 等允許的檔。明文 `data.json`、圖片、密碼檔絕不可進 repo。Canvas 只有 Grok Bot 能更新；Codex 新增的資料，Grok Bot 下次 pull 時要補進 Canvas。
+
 ## 每次開始
-- 先讀取遠端 main 最新版、本文件及現有程式，再修改；不要用舊快照整份覆蓋。
+- 先 `git pull --ff-only` 取得遠端 main 最新版，讀本文件、`CODEX_協作指南.md` 及現有程式，再修改；不要用舊快照整份覆蓋。
 - 寫入時帶入最新檔案 SHA；若發生版本衝突，重新讀取並整合雙方修改。
 - 保留既有資料、編號、功能與其他維護者的修改。回報實際存入的 commit 及驗證結果。
 
@@ -23,6 +26,6 @@
 ## 資料與網站同步
 - GitHub 網頁 index.html 與 Grok Bot Canvas / 網址是分別存在的版本；沒有驗證發布流程前，不宣稱 GitHub 提交已同步更新 Grok 網站。
 - 分別回報：資料保存、GitHub 提交、網站發布及實際網站驗證的狀態。
-- data.enc.json 是加密資料；build.py 使用外部資料與密碼檔。無法取得授權的完整原始資料時，不以截圖或網站文字重建並覆蓋加密資料。
-- 不將網站密碼、GitHub 憑證或未加密的私人日誌提交到公開儲存庫。
+- data.enc.json 是加密資料與唯一共同來源。先 pull 再以 `decrypt.py` 解出本機 data.json；`build.py` 從環境變數或本機密碼檔讀取密碼。無法取得授權的完整原始資料時，不以截圖或網站文字重建並覆蓋加密資料。
+- 不將網站密碼、GitHub 憑證或未加密的私人日誌（含 data.json 與圖片）提交到公開儲存庫。
 - 本說明不建立 Bot 之間的直接通訊或自動同步；接手者須自行讀取最新版。

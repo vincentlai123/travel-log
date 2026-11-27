@@ -1,0 +1,24 @@
+# 明文資料與備份，絕不可提交
+data.json
+data.json.bak*
+*.bak
+
+# 本機圖片（網站也不嵌入圖片，見協作指南）
+圖片/
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.heic
+
+# 密碼與本機設定
+.travel-log-pass
+travel-log-pass
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
