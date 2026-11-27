@@ -8,6 +8,8 @@
 2. **明文 `data.json`、圖片、密碼檔絕不可 commit 或 push 到 GitHub。**
 3. 每次動手都走：**先 `git pull` → 解密 → 編輯 → `build` → 只提交加密檔與本說明允許的文件 → `push`。**
 
+Windows 端可另用 [WINDOWS_協作接續.md](WINDOWS_協作接續.md) 的本機密碼視窗與 Node 加解密工具（與 Python 格式相同、不需額外套件）。該文件也規範 Git 傳輸受限時使用已授權 GitHub 連線的最新版本與衝突檢查流程；密碼仍只留本機。
+
 ---
 
 ## 一、網址

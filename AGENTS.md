@@ -6,6 +6,8 @@
 完整流程見 repo 根目錄的 [CODEX_協作指南.md](CODEX_協作指南.md)。**唯一共同資料來源是 GitHub 的 `data.enc.json`。** 每次修改前：`git pull --ff-only`，再 `python3 decrypt.py`（或 Windows 的 `python decrypt.py`），編輯本機明文後用 `build.py` 加密，只提交 `data.enc.json` 與 `CHANGELOG.md` 等允許的檔。明文 `data.json`、圖片、密碼檔絕不可進 repo。Canvas 只有 Grok Bot 能更新；Codex 新增的資料，Grok Bot 下次 pull 時要補進 Canvas。
 
 ## 每次開始
+- Windows 端也可使用無額外套件的 `node collaboration.mjs decrypt` / `build`；完整首次設定見 `WINDOWS_協作接續.md`。Python 與 Node 使用相同加密格式。密碼只在本機設定視窗輸入，禁止貼到聊天。
+- 若此執行環境的 Git 網路不可用，使用已授權的 GitHub 連線讀取 main 最新 commit、固定該 commit 下載並核對檔案；以該 tree 建立最小修改，更新 main 時帶入預期的舊 head 作衝突保護。不得宣稱已執行成功的 `git pull`，也不得以舊資料整份覆蓋。
 - 先 `git pull --ff-only` 取得遠端 main 最新版，讀本文件、`CODEX_協作指南.md` 及現有程式，再修改；不要用舊快照整份覆蓋。
 - 寫入時帶入最新檔案 SHA；若發生版本衝突，重新讀取並整合雙方修改。
 - 保留既有資料、編號、功能與其他維護者的修改。回報實際存入的 commit 及驗證結果。
