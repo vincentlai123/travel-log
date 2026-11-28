@@ -13,4 +13,4 @@
 
 ## 其他操作
 
-「我在某地」直接讀同一份清單，依地區、專題、料理或關鍵字查詢。`index.html`、`viewer.js`、`viewer.css` 是公開唯讀介面。網站不需要密碼或 Windows 程式。公共資料不放帳號密碼、GitHub 憑證、私人附件或本機路徑。`data.enc.json` 僅為舊版歷史快照，不再更新。
+「我在某地」直接讀同一份清單，依地區、專題、料理或關鍵字查詢。`index.html`、`viewer.js`、`viewer.css` 是公開唯讀介面。網站不需要密碼或 Windows 程式。公共資料不放帳號密碼、GitHub 憑證、私人附件或本機路徑。舊版加密快照與 Windows 工具只存在 Git 版本紀錄。
