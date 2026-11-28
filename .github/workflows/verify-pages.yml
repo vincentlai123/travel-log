@@ -1,0 +1,87 @@
+name: 驗證公開旅遊日誌
+on:
+  push:
+    branches: [main]
+    paths: [places.json, index.html, viewer.js, viewer.css, .github/workflows/verify-pages.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: verify-live-travel-log
+  cancel-in-progress: true
+jobs:
+  live:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Check the live collection and search in Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$CHROMEWEBDRIVER/chromedriver" --port=9515 >"$RUNNER_TEMP/travel-chromedriver.log" 2>&1 &
+          driver_pid=$!
+          trap 'kill "$driver_pid" 2>/dev/null || true' EXIT
+          python3 - <<'PY'
+          import json
+          import time
+          from pathlib import Path
+          from urllib.parse import urlencode
+          from urllib.request import Request, urlopen
+
+          site = "https://vincentlai123.github.io/travel-log/"
+          driver = "http://127.0.0.1:9515"
+          wanted = json.loads(Path("places.json").read_text(encoding="utf-8"))
+          records = sorted(wanted["entries"], key=lambda r: r["id"], reverse=True)
+
+          def read(url, body=None):
+              encoded = None if body is None else json.dumps(body).encode()
+              request = Request(url, data=encoded, headers={"Content-Type": "application/json"})
+              with urlopen(request, timeout=20) as response:
+                  return json.load(response)
+
+          def until(check, seconds, message):
+              deadline = time.monotonic() + seconds
+              last_error = None
+              while time.monotonic() < deadline:
+                  try:
+                      result = check()
+                      if result:
+                          return result
+                  except (OSError, ValueError) as error:
+                      last_error = error
+                  time.sleep(2)
+              raise RuntimeError(message) from last_error
+
+          until(lambda: read(site + "places.json?verify=" + str(time.time_ns())) == wanted,
+                330, "The deployed collection does not match this commit")
+          until(lambda: read(driver + "/status")["value"]["ready"], 15, "ChromeDriver did not start")
+          session = read(driver + "/session", {"capabilities": {"alwaysMatch": {
+              "browserName": "chrome",
+              "goog:chromeOptions": {"args": ["--headless", "--disable-dev-shm-usage", "--window-size=390,844"]}
+          }}})["value"]["sessionId"]
+          endpoint = driver + "/session/" + session
+
+          def execute(script, *args):
+              return read(endpoint + "/execute/sync", {"script": script, "args": list(args)})["value"]
+
+          def navigate(query=""):
+              read(endpoint + "/url", {"url": site + "?" + urlencode({"q": query, "verify": time.time_ns()})})
+
+          navigate()
+          count = len(records)
+          until(lambda: execute("return document.querySelector('#count')?.textContent") == f"{count} 筆",
+                25, "Visible collection total is incorrect")
+          assert execute("return document.querySelectorAll('#rows button.place').length") == count
+          assert not execute("return Boolean(document.querySelector('input[type=password]'))")
+          for record in records[:2]:
+              name = record["名稱"]
+              navigate(name)
+              until(lambda: execute(
+                  "return Array.from(document.querySelectorAll('#rows button.place')).some(b => b.textContent === arguments[0])",
+                  name), 25, "Search did not show the expected place")
+              execute("Array.from(document.querySelectorAll('#rows button.place')).find(b => b.textContent === arguments[0]).click()", name)
+              assert execute("return document.querySelector('#detail[open] #detail-title')?.textContent") == name
+              print("Public search and details verified:", name)
+          print("Verified public collection:", count)
+          PY
