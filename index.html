@@ -1,87 +1,41 @@
 <!doctype html>
-<html lang="zh-Hant"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vincent 旅遊日誌</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<style>
-:root{--bg:#f6f5f2;--card:#fff;--ink:#222;--mute:#777;--ac:#2e7d5b}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:var(--ink)}
-header{position:sticky;top:0;background:var(--bg);padding:12px 14px 8px;z-index:2;border-bottom:1px solid #e5e2dc}
-h1{font-size:20px;margin:0 0 8px}
-.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
-.chip{flex:none;border:1px solid #ccc;background:#fff;border-radius:999px;padding:6px 12px;font-size:14px}
-.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
-.row{display:flex;gap:8px}select,input{font-size:15px;padding:8px;border:1px solid #ccc;border-radius:8px;background:#fff}
-select{flex:none;max-width:34%}input{flex:1;min-width:0}
-main{padding:12px 14px 40px;max-width:760px;margin:auto}
-.card{background:var(--card);border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.card h2{font-size:17px;margin:0 0 4px}.tag{font-size:12px;color:var(--mute);margin-bottom:8px}
-.card p{margin:4px 0;font-size:14px;line-height:1.5}.k{color:var(--mute)}
-.card a{color:var(--ac)}.count{font-size:13px;color:var(--mute);margin:4px 0 10px}
-#lock{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:9}
-#lock input{width:220px;text-align:center;font-size:18px}#lock button,.gb{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:9px 18px;font-size:15px;text-decoration:none;display:inline-block}
-#err{color:#c33;font-size:13px;min-height:1em}.top{display:flex;justify-content:space-between;align-items:center}.gb{padding:6px 12px;font-size:13px}
-</style></head><body>
-<div id="lock"><h1>Vincent 旅遊日誌</h1><input id="pw" type="password" inputmode="numeric" placeholder="輸入密碼"><button id="go">進入</button><div id="err"></div></div>
-<header><div class="top"><h1>Vincent 旅遊日誌</h1><a class="gb" id="gbtn" href="grokbot://app/v1/agent?id=77300747-d678-45b2-85f1-6158e0f2d4c2">Grok Bot 新增／修改</a></div>
-<div class="chips" id="cats"></div>
-<div class="row"><select id="zone"></select><select id="topic"></select><input id="q" placeholder="搜尋：宜蘭、咖啡、民宿…"></div></header>
-<main><div class="count" id="count"></div><div id="list"></div></main>
-<script>
-const CATS=["全部","食","衣","住","行","育","樂"],ZONES=["全部地區","台灣・北","中永和","台灣・中","台灣・南","台灣・東","台灣・離島","國外","日本","日本・北海道","日本・東北","日本・關東","日本・中部","日本・關西","日本・中國","日本・四國","日本・九州沖繩"];
-let cat="全部",E=[];
-const topicsOf=e=>{
- const raw=e["專題"],values=Array.isArray(raw)?raw:[raw];
- return [...new Set(values.filter(x=>typeof x==="string").map(x=>x.trim()).filter(Boolean))];
-};
-function refreshTopics(){
- const select=document.getElementById("topic"),previous=select.value;
- const topics=["全部專題",...new Set(["麵類","美國運通",...E.flatMap(topicsOf)].filter(x=>x!=="全部專題"))];
- select.replaceChildren(...topics.map(topic=>{
-  const option=document.createElement("option");
-  option.value=topic;option.textContent=topic;return option;
- }));
- select.value=topics.includes(previous)?previous:"全部專題";
-}
-const locOf=e=>[e["分區"],e["縣市"],e["地點"],e["地址"]].join(" ");
-const isJP=e=>e["區域"]==="日本"||e["分區"]==="日本"||/日本/.test([e["區域"],e["分區"],e["縣市"],e["地點"],e["地址"]].join(" "));
-const JP_REGS={"日本・北海道":/北海道|札幌|函館|小樽|旭川|釧路|帶廣|帯広|網走|稚內|稚内|室蘭|苫小牧|富良野|登別|知床|美瑛|定山溪|定山渓|千歲|千歳/,"日本・東北":/東北|青森|岩手|宮城|秋田|山形|福島|仙台|盛岡|郡山|會津|会津|弘前|八戶|八戸|米澤|米沢|宮古市/,"日本・關東":/關東|関東|東京|茨城|栃木|群馬|埼玉|千葉|神奈川|橫濱|横浜|川崎|宇都宮|水戶|水戸|前橋|高崎|鎌倉|橫須賀|横須賀|箱根|成田|日光|大宮|川越|船橋|伊勢崎/,"日本・中部":/中部|新潟|富山|石川|福井|山梨|長野|岐阜|靜岡|静岡|愛知|名古屋|金澤|金沢|甲府|松本|濱松|浜松|熱海|輕井澤|軽井沢|富士山|富士市|富士宮|富士五湖|高山市|飛驒|飛騨|白川鄉|白川郷/,"日本・關西":/關西|関西|近畿|大阪府|(?:^|[^東])大阪|(?:^|[^東])京都|兵庫|奈良|和歌山|滋賀|三重[縣県]|神戶|神戸|姬路|姫路|宇治|伊勢市|伊勢神宮|伊勢志摩|白濱|白浜|高野山|西宮|蘆屋|芦屋|大津/,"日本・中國":/中國地方|中国地方|鳥取|島根|岡山|廣島|広島|山口|松江|出雲|倉敷|尾道|下關|下関|岩國|岩国|宮島|萩/,"日本・四國":/四國|四国|德島|徳島|香川|愛媛|高知|高松|松山|今治|宇和島|鳴門|琴平|道後/,"日本・九州沖繩":/九州|沖繩|沖縄|福岡|佐賀|長崎|熊本|大分|宮崎|鹿兒島|鹿児島|那霸|那覇|博多|北九州|別府|石垣|宮古島|恩納|名護|本部|讀谷|読谷|北谷|糸滿|糸満|嘉手納|久米島|西表|阿蘇|由布院|湯布院|佐世保|唐津|宜野灣|宜野湾|豐見城|豊見城/};
-const jpZoneOf=e=>{const s=locOf(e);for(const z of Object.keys(JP_REGS))if(JP_REGS[z].test(s))return z;return ""};
-const isJPLike=e=>isJP(e)||(e["區域"]==="國外"&&!!jpZoneOf(e));
-const zoneOf=e=>{if(e["區域"]==="台灣")return "台灣・"+e["分區"];if(isJPLike(e))return jpZoneOf(e)||"日本";return "國外"};
-const isZYH=e=>/中和區|永和區/.test([e["縣市"],e["地點"],e["地址"]].join(" "));
-const zoneMatch=(e,z)=>z==="全部地區"||(z==="中永和"?isZYH(e):z==="國外"?e["區域"]!=="台灣":z==="日本"?isJPLike(e):JP_REGS[z]?isJPLike(e)&&JP_REGS[z].test(locOf(e)):zoneOf(e)===z);
-const esc=s=>String(s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-const link=s=>esc(s).replace(/https?:\/\/[^\s，；、）)]+/g,u=>`<a href="${u}" target="_blank">${u.length>40?"連結":u}</a>`);
-function render(){
- refreshTopics();
- document.getElementById("cats").innerHTML=CATS.map(c=>`<button class="chip ${c===cat?"on":""}" data-c="${c}">${c} ${c==="全部"?E.length:E.filter(e=>e["類別"]===c).length}</button>`).join("");
- const z=document.getElementById("zone").value,t=document.getElementById("topic").value,k=document.getElementById("q").value.trim();
- const s=E.filter(e=>(cat==="全部"||e["類別"]===cat)&&zoneMatch(e,z)&&(t==="全部專題"||topicsOf(e).includes(t))&&(!k||Object.values(e).join(" ").includes(k)));
- document.getElementById("count").textContent=`共 ${s.length} 筆`;
- document.getElementById("list").innerHTML=s.map(e=>{
-  const q=encodeURIComponent(e["名稱"]+" "+(e["地址"]||""));
-  const tel=(e["電話"]||"").match(/[\d-]{8,}/);
-  return `<div class="card"><h2>${esc(e["名稱"])}</h2><div class="tag">${e["類別"]}・${zoneOf(e)}・${esc(e["縣市"])} ${esc(e["子類"])}${topicsOf(e).map(x=>` ・#${esc(x)}`).join("")}</div>
-  ${e["地址"]?`<p><span class="k">地址</span> <a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank">${esc(e["地址"])}</a></p>`:""}
-  ${e["電話"]?`<p><span class="k">電話</span> ${tel?`<a href="tel:${tel[0].replace(/-/g,"")}">${esc(e["電話"])}</a>`:esc(e["電話"])}</p>`:""}
-  ${e["營業時間"]?`<p><span class="k">時間</span> ${esc(e["營業時間"])}</p>`:""}
-  ${e["備註"]?`<p>${link(e["備註"])}</p>`:""}
-  ${e["官網"]?`<p><a href="${e["官網"]}" target="_blank">官網</a></p>`:""}${e["訂位"]?`<p><a href="${e["訂位"]}" target="_blank">訂位</a></p>`:""}</div>`}).join("");
-}
-document.getElementById("zone").innerHTML=ZONES.map(z=>`<option>${z}</option>`).join("");
-document.getElementById("cats").onclick=ev=>{const c=ev.target.dataset.c;if(c){cat=c;render()}};
-refreshTopics();
-document.getElementById("zone").onchange=render;document.getElementById("topic").onchange=render;document.getElementById("q").oninput=render;
-const ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-async function unlock(pw){const r=await fetch("data.enc.json?"+Date.now());const j=await r.json();
- const km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
- const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:ub(j.salt),iterations:j.iter,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
- const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(j.iv)},key,ub(j.ct));
- const d=JSON.parse(new TextDecoder().decode(pt));E=d.entries.slice().reverse();render();
- document.getElementById("lock").style.display="none";localStorage.setItem("tlpw",pw);}
-async function tryPw(pw){try{await unlock(pw)}catch(e){document.getElementById("err").textContent="密碼不對，再試一次";localStorage.removeItem("tlpw")}}
-document.getElementById("go").onclick=()=>tryPw(document.getElementById("pw").value);
-document.getElementById("pw").onkeydown=e=>{if(e.key==="Enter")tryPw(e.target.value)};
-const saved=localStorage.getItem("tlpw");if(saved)tryPw(saved);
-</script></body></html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111513">
+  <meta name="referrer" content="no-referrer">
+  <title>Vincent 旅遊日誌</title>
+  <link rel="stylesheet" href="viewer.css">
+  <script defer src="viewer.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header><h1><span lang="en">Vincent</span> 旅遊日誌</h1></header>
+    <section class="filters" aria-label="篩選收藏">
+      <nav id="categories" aria-label="收藏類別"></nav>
+      <div class="fields">
+        <label class="search">搜尋<input type="search" id="query" placeholder="店名、地區或料理" autocomplete="off"></label>
+        <label>地區<select id="zone"></select></label>
+        <label>專題<select id="topic"></select></label>
+      </div>
+    </section>
+    <p id="alert" role="status" hidden></p>
+    <section class="collection" aria-labelledby="collection-title">
+      <div class="line"><h2 id="collection-title">收藏清單</h2><span id="count" aria-live="polite">讀取中…</span></div>
+      <table id="table" hidden>
+        <thead><tr><th scope="col">名稱</th><th scope="col" class="category">類別</th><th scope="col" class="region">地區</th><th scope="col" class="type">類型</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p id="empty" hidden></p>
+      <button id="reset" type="button" hidden>清除篩選</button>
+      <button id="retry" type="button" hidden>重新讀取</button>
+    </section>
+  </main>
+  <dialog id="detail" aria-labelledby="detail-title">
+    <div class="dialog-top"><p id="detail-kind"></p><button id="close" type="button" autofocus>關閉</button></div>
+    <h2 id="detail-title"></h2>
+    <div id="detail-body"></div>
+  </dialog>
+</body>
+</html>

@@ -1,4 +1,4 @@
-# 明文資料與備份，絕不可提交
+# 舊版本機工作檔與私人備份；正式公開清單使用 places.json
 data.json
 data.json.bak*
 *.bak
